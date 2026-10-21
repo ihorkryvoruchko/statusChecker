@@ -1,12 +1,38 @@
 import {lesenDatei, schreibenDatei} from './filehandler.js';
-
+import {readFileSync, writeFileSync} from 'node:fs';
 
 const args = getArgumments()
-const webseiten = await lesenDatei('./webseiten.json');
+
 
 if (args.add) {
-    webseiten.push({"url": args.add})
+    const filePath = './webseiten.json';
+    const newObject = {url: args.add};
+    addObjectToJsonFile(filePath, newObject);
 }
+
+function addObjectToJsonFile(file, obj) {
+    try {
+        const rawData = readFileSync(file, 'utf8');
+        let jsonData;
+
+        try {
+            jsonData = JSON.parse(rawData);
+        } catch (parseErr) {
+            console.error("Fehler beim Parsen der JSON-Datei:", parseErr.message);
+            return;
+        }
+
+        jsonData.push(obj);
+
+        writeFileSync(file, JSON.stringify(jsonData, null, 2), 'utf8');
+
+        console.log("Objekt erfolgreich hinzugefügt!");
+    } catch (err) {
+        console.error("Fehler beim Lesen/Schreiben der Datei:", err.message);
+    }
+}
+
+const webseiten = await lesenDatei('./webseiten.json');
 
 await schreibenDatei('./statuses.log', webseiten);
 
