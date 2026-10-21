@@ -1,19 +1,29 @@
-import {readFile} from 'node:fs/promises';
-import {lookup} from 'dns/promises';
+import {lesenDatei, schreibenDatei} from './filehandler.js';
 
-const text = await readFile('./webseiten.json', 'utf-8');
 
-const webseiten = JSON.parse(text);
+const args = getArgumments()
+const webseiten = await lesenDatei('./webseiten.json');
 
-webseiten.forEach(async (webseite) => {
-    const start = Date.now();
-    const response = await fetch(webseite.url);
-    const end = Date.now();
-    const status = response.status;
-    const url = response.url;
-    const heute = new Date().toLocaleDateString();
-    const { address, family } = await lookup(new URL(url).hostname);
-            
-    console.log(heute, url, status, address);
-        
-})
+if (args.add) {
+    webseiten.push({"url": args.add})
+}
+
+await schreibenDatei('./statuses.log', webseiten);
+
+function getArgumments() {
+    let argumente = {}
+
+    if (process.argv.lenght <= 2 ) {
+        return;
+    }
+
+    const args = process.argv.filter( (element) => element.includes("=") )
+
+    for(const argument of args) {
+        const sauberArgument = argument.startsWith("--") ? argument.slice(2) : text;
+        const [key, value] = sauberArgument.split("=");
+        argumente[key] = value
+    }
+
+    return argumente
+}
